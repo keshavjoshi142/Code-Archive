@@ -8,8 +8,8 @@
 #include <fcntl.h>
 #include <termios.h>
 
-#define LIMIT 256 // max number of tokens for a command
-#define MAXLINE 1024 // max number of characters from user input
+#define LIMIT 256 
+#define MAXLINE 1024 
 
 void type_prompt()
 {
@@ -26,152 +26,212 @@ void type_prompt()
 
 
 
-void pipeHandler(char * args[])
-{
-	int fd1[2];
+void pipeHandler(char * args[]){
+	
+	int fd[2]; 
 	int fd2[2];
-	int num_cmd = 0;
-
+	
+	int num_cmds = 0;
+	
 	char *command[256];
-
+	
 	pid_t pid;
-
-	int end =0;
-	int i=0;
-	int j=0;
-	int k=0;
-	int l=0;
-
-	while(args[l] != NULL)
+	
+	int err = -1;
+	int end = 0;
+	
+	
+	int i = 0;
+	int j = 0;
+	int k = 0;
+	int l = 0;
+	
+	while (args[l] != NULL)
 	{
-		if(strcmp(args[l] ,"|") == 0)
-		{
-			num_cmd++;
+		
+		if (strcmp(args[l],"|") == 0){
+			num_cmds++;
 		}
 		l++;
 	}
-
-	num_cmd++;
-
-
-	while(args[j] != NULL && end !=1)
-	{
-						k = 0;
-
-						while(strcmp(args[j] , "|")!=0)
-						{
-
-							printf("%s\n",args[j]);
-							command[k] = args[j];
-							j++;
-
-							if(args[j] == NULL)/////////to break the loop when no command is found
-							{
-								end = 1;
-								k++;
-								break;
-							}
-
-							k++;
-						}
-
-						command[k] = NULL;
-						j++;
-
-
-
-						if( i&1 ){/////for odd i
-							pipe(fd1);
-						}
-						else{
-							pipe(fd2);////for even i
-						}
-
-						pid = fork();
-						if(pid == -1)
-						{
-								if( i != num_cmd-1)
-								{
-										if( i&1 )
-											close(fd1[1]);
-										else
-											close(fd2[1]);
-								}
-
-								printf("error");
-								return;
-						}
-						if(pid == 0)
-						{		
-
-								if(i == 0)///////////////////first command can only write
-								{
-									dup2(fd2[1] , STDOUT_FILENO);
-								}
-								else if(i == num_cmd-1)///////////////for last command , change only read discriptor
-								{
-									if( num_cmd&1)
-										dup2(fd1[0] , STDIN_FILENO);
-									else
-										dup2(fd2[0] , STDIN_FILENO);
-								}
-								else
-								{
-									if( i&2 )
-									{
-										dup2(fd2[0] , STDIN_FILENO);
-										dup2(fd1[1] , STDOUT_FILENO);
-									}
-									else{
-										dup2(fd1[0] , STDIN_FILENO);
-										dup2(fd2[1] , STDOUT_FILENO);
-									}
-								}
-
-						if(execvp(command[0] , command)==-1){
-							kill(getpid() , SIGKILL);
-						}
-
-					}
-
-
-
-
-
-
+	num_cmds++;
 	
-					if(i ==0)
-						close(fd2[1]);
-					else if(i == num_cmd-1)
-					{
-						if(num_cmd&1)
-							close(fd1[0]);
-						else
-							close(fd2[0]);
-					}
-					else{
-						if(i&2)
-						{
-							close(fd2[0]);
-							close(fd1[1]);
-						}
-						else{
-							close(fd1[0]);
-							close(fd2[1]);
-						}
-					}
+	
+	while (args[j] != NULL && end != 1){
+		k = 0;
+		
+		while (strcmp(args[j],"|") != 0)
+		{
+			command[k] = args[j];
+			
 
-					printf("kkkkkkkkkkkkkk\n");
-					waitpid(pid , NULL , 0);
+			j++;	
+			if (args[j] == NULL){
+				
+				end = 1;
+				k++;
+				break;
+			}
+			k++;
+		}
 
-					i++;
-
+		command[k] = NULL;
+		j++;		
+		
+		
+		if (i % 2 != 0){
+			pipe(fd); // for odd i
+		}else{
+			pipe(fd2); // for even i
+		}
+		
+		pid=fork();
+		//printf("%d\n" , pid);
+		
+		if(pid==-1){			
+			if (i != num_cmds - 1){
+				if (i % 2 != 0){
+					close(fd[1]); // for odd i
+				}else{
+					close(fd2[1]); // for even i
+				} 
+			}			
+			printf("Child process could not be created\n");
+			return;
+		}
+		if(pid==0){
+			// If we are in the first command
+			if (i == 0){
+				dup2(fd2[1], STDOUT_FILENO);
+			}
+	
+			else if (i == num_cmds - 1){
+				if (num_cmds % 2 != 0){ // for odd number of commands
+					dup2(fd[0],STDIN_FILENO);
+				}else{ // for even number of commands
+					dup2(fd2[0],STDIN_FILENO);
+				}
+	
+			}else{ 
+				if (i % 2 != 0){
+					dup2(fd2[0],STDIN_FILENO); 
+					dup2(fd[1],STDOUT_FILENO);
+				}else{ // for even i
+					dup2(fd[0],STDIN_FILENO); 
+					dup2(fd2[1],STDOUT_FILENO);					
+				} 
+			}
+			
+			if (execvp(command[0],command) ==err){
+				kill(getpid(),SIGTERM);
+			}		
+		}
+				
+		
+		if (i == 0){
+			close(fd2[1]);
+		}
+		else if (i == num_cmds - 1){
+			if (num_cmds % 2 != 0){					
+				close(fd[0]);
+			}else{					
+				close(fd2[0]);
+			}
+		}else{
+			if (i % 2 != 0){					
+				close(fd2[0]);
+				close(fd[1]);
+			}else{					
+				close(fd[0]);
+				close(fd2[1]);
+			}
+		}
+				
+		waitpid(pid,NULL,0);
+				
+		i++;	
 	}
 }
+		
+
+void new_operator(char * args[])
+{
+	int fd[2];
+
+	pid_t pid;
+	int err = -1;
+	char * command[256];
+
+	command[0] = args[0];
+	command[1] = args[1];
+	command[2] = args[3];
+	command[3] = args[4];
+	command[4] = args[6];
+	command[5] = args[7];
+
+
+	int i=0;
+
+	pipe(fd);
+
+	pid = fork();
+
+	while( i < 3)
+	{
+		if(pid == 0)
+		{
+			if(i==0)
+			{
+				dup2(fd[1] , STDOUT_FILENO);
+
+				if(execvp(command[i], command)==err)
+				{
+					kill(getpid() , SIGTERM);
+				}
+			}
+			else
+			{
+				dup2(fd[0] , STDIN_FILENO);
+
+				if(execvp(command[0], command)==err)
+				{
+					kill(getpid() , SIGTERM);
+				}
+			}
 
 
 
+		}
 
+		if(i==0)
+			close(fd[0]);
+		else 
+			close(fd[1]);
+
+		waitpid(pid , NULL , 0);
+		i++;
+		
+	}
+
+
+
+}
+
+int changeDirectory(char* args[]){
+	
+	if (args[1] == NULL) {
+		chdir(getenv("HOME")); 
+		return 1;
+	}
+	
+	else{ 
+		if (chdir(args[1]) == -1) {
+			printf(" %s: no such directory\n", args[1]);
+            return -1;
+		}
+	}
+	return 0;
+}
 
 void fileIO(char *args[] , char * inputFile,  char* outputFile , int option)
 {
@@ -220,9 +280,9 @@ int Handlecommand(char * args[])
 
 	while(args[j] != NULL)
 	{	
-	//printf("%s\n","kkkkkkkkkkkkk\n");
-			if((strcmp(args[j] , ">") == 0) || (strcmp(args[j] ,"<")==0) || (strcmp(args[j] ,">>") == 0) || (strcmp(args[j] , "|")) == 0)
+			if((strcmp(args[j] , ">") == 0) || (strcmp(args[j] ,"<")==0) || (strcmp(args[j] ,">>") == 0) || (strcmp(args[j] , "|")) ==0 ||(strcmp(args[j] , "||"))  == 0)
 			{
+				
 				flag = 1;
 				break;
 			}
@@ -232,10 +292,11 @@ int Handlecommand(char * args[])
 			j++;
 	}
 
+	
 	if(strcmp(args[0] , "exit") == 0)exit(0);///////////////////////////// for exit command
-
+	else if(strcmp (args[0] , "cd") == 0)changeDirectory(args);
 	else if(flag == 0)//////////////////////////////////////////////////// use of fork and execve 
-	{
+	{	
 		char *envp [] = {(char*) " PATH=/bin" , 0};
 		char cmd[100];
 
@@ -264,7 +325,7 @@ int Handlecommand(char * args[])
 					return -1;
 				}
 
-				printf("%s\n", "jjjjjjjjjjjj\n");
+				
 				fileIO(args2 , NULL , args[i+1] , 0);
 
 			}
@@ -278,6 +339,12 @@ int Handlecommand(char * args[])
 
 				fileIO(args , args[i+1], NULL , 1);
 
+			}
+			if(strcmp(args[i] ,"||")==0)
+			{	
+				
+				new_operator(args);
+				return 1;
 			}
 			if(strcmp(args[i],"|")==0)
 			{

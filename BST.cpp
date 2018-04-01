@@ -28,6 +28,10 @@ typedef pair<int , int> ii;
 #define BASE 31
 #define MAX 2000000000
 
+// for competitive programmming use set<> and map<> instead to use below operation because set and map are implemented in RB-Tree which is 
+// balanced BST.
+
+
 
 /*
 operation supported 

@@ -85,7 +85,7 @@ set<string> backtrackAll(string s1 , string s2 , int n , int m)
 
 	if(s1[n-1] == s2[m-1])
 	{
-		set<string> s = dpset[n-1][m-1];
+		set<string> s = backtrackAll(s1 , s2 , n-1 , m-1);
 		set<string> temp;
 		for(set<string>::iterator itr=s.begin() ;itr!=s.end() ;++itr)
 		{
@@ -101,11 +101,11 @@ set<string> backtrackAll(string s1 , string s2 , int n , int m)
 
 	if(dp[n-1][m] > dp[n][m-1])
 	{
-		dpset[n][m] = dpset[n-1][m];
+		dpset[n][m] = backtrackAll(s1 , s2 , n-1 , m);
 	}
 	else if(dp[n-1][m] < dp[n][m-1])
 	{
-		dpset[n][m] = dpset[n][m-1];
+		dpset[n][m] = backtrackAll(s1 , s2 , n , m-1);
 	}
 	else
 	{
