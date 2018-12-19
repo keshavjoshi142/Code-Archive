@@ -88,89 +88,63 @@ NODE * sortInsert(NODE * head ,int k)
 }
 
 
-
+bool sortinrev(const pair<int,int> &a,  
+               const pair<int,int> &b) 
+{ 
+       return (a.first > b.first); 
+} 
 
 int main() 
 {
-	/*NODE * h1 = NULL;
-	
-	int N , B;
+  
+  int n;
 
-	
-	cin >> N;
-	
-	for(int i=0 ; i<N ; i++) {
-		int a;
-		cin >> a;
-		h1 = addNodeAtEnd(h1 , a);
-	}
+  cin >> n;
 
+  vector < int > v(n);
 
-	NODE * head = h1;
-	NODE * ansHead = NULL;
+  for(int i=0 ; i < n ; i++)
+  {
+  	cin >> v[i];
+  }
+  
+  map < int , int > m;
 
-	while(h1 != NULL)
-	{
-		ansHead = sortInsert(ansHead , h1->data);
-		h1 = h1->next;
-	}
+  
+  for(int i=0 ; i< n ; i++)
+  {
+  		m[v[i]]++;
+  }
 
-	printList(ansHead);*/
+  vector < pair < int , int > > feq;
 
-	int n;
-	cin >> n;
+  std::map<int, int > :: iterator it;
 
-	vector < int > A;
+  	cout << "kk" << endl;
+  for(it = m.begin() ; it != m.end() ; it++)
+  {
+  	pair < int , int > p = make_pair(it->second , it->first);
 
-	for(int i=0 ; i< n ; i++)
-	{
-		int a;
-		cin >> a;
-		A.push_back(a);
-	}
+  	cout << it->second << " " << it->first << endl;
+  	feq.push_back(p);
+  }
 
-	stack < int > st;
+  sort(feq.begin() , feq.end(), sortinrev);
 
-	vector < int > ans(n);
+  for(int i=0 ; i< feq.size() ; i++)
+  	cout << feq[i].first << " " << feq[i].second << endl;
 
-	st.push(A[0]);
-	ans[0] = -1;
-
-	for(int i=1 ; i<n ; i++)
-	{
-	   cout << st.top() << endl;
-		if(st.top() < A[i])
-		{	
-			ans[i] = st.top();
-			st.push(A[i]);
-		}
-		else{
-			while(!st.empty() && st.top() >= A[i])
-				st.pop();
-
-			if(st.empty())
-			{
-				ans[i] = -1;
-				st.push(A[i]);
-			}
-			else{
-
-				ans[i] = st.top();
-				st.push(A[i]);
-			}
-		}
-	}
-	
-
-	
-	for(int i=0 ; i<n ; i++)
-		cout << ans[i] << " ";
-
-	cout << endl;
+  for(int i=0 ; i<feq.size() ; i++)
+  {
+  	for(int k = 0 ; k < feq[i].first; k++)
+  	{
+  		//if(feq[i].second != 0)
+  		//cout << i << " ";
+  			ncout << feq[i].second << endl;
+  	}
+  }
 
 
-
-	
 }
 
 
